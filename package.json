@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "llamaindex": "^0.1.9"
+  }
+}
