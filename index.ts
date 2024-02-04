@@ -6,37 +6,48 @@ import {
   Ollama,
   serviceContextFromDefaults,
   serviceContextFromServiceContext,
+  similarity,
 } from "llamaindex";
 
 async function main() {
-  const path = "/home/userface/Desktop/debt.txt";
-  const essay = await fs.readFile(path, "utf-8");
-  const llm = new Ollama({ model: "mistral" });
+  const path = "slack.txt";
+  const essay = await fs.readFile(path, "utf-8")
+  ;
+  const llm = new Ollama({
+    model: "mistral",
+  });
   const vectorStore = new QdrantVectorStore({
-    collectionName: "books",
+    collectionName: "slack",
     url: "http://localhost:6333",
   });
 
-  const document = new Document({ text: essay, id_: path });
+  const documents = essay.split("\n").map(text => new Document({ text, id_: path }))
 
-  const index = await VectorStoreIndex.fromDocuments([document], {
+  const index = await VectorStoreIndex.fromDocuments(documents, {
     vectorStore,
     serviceContext: serviceContextFromDefaults({
-      llm,
+      llm: llm,
       embedModel: llm,
-      chunkOverlap: 25,
-      chunkSize: 50,
+      // chunkOverlap: 25,
+      // chunkSize: 50,
     }),
   });
 
-  // const index = await VectorStoreIndex.fromVectorStore(vectorStore, serviceContextFromDefaults({llm, embedModel:llm}))
-  const queryEngine = index.asQueryEngine();
-  const response = await queryEngine.query({
-    query: "Where is the land of a thousand temples?",
-  });
+  // const index = await VectorStoreIndex.fromVectorStore(
+  //   vectorStore,
+  //   serviceContextFromDefaults({
+  //     llm: llm,
+  //     embedModel: llm,
+  //   })
+  // );
+  const response = await index
+    .asRetriever()
+    .retrieve(
+      "Napkins"
+    );
 
   // Output response
-  console.log(response.toString());
+  console.log(response);
 }
 
 main().catch(console.error);
